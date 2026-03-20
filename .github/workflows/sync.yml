@@ -2,7 +2,7 @@ name: Auto Update GD3DS
 
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "*/15 * * * *"  # roda a cada 15 min
   workflow_dispatch:
 
 jobs:
@@ -10,28 +10,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-      - name: Limpar arquivos (SEM quebrar git)
-        run: find . -mindepth 1 -not -path "./.git*" -delete
+      - name: Limpar arquivos antigos (sem tocar no .git)
+        run: |
+          find . -mindepth 1 -not -path "./.git*" -delete
 
-      - name: Baixar ZIP
+      - name: Baixar ZIP do nightly
         run: |
           curl -L https://nightly.link/AleFunky/gd3ds/workflows/main/master/gd3ds-cia.zip -o file.zip
 
-      - name: Extrair
+      - name: Extrair ZIP
         run: unzip file.zip -d temp
 
-      - name: Pegar CIA
+      - name: Copiar CIA
         run: |
           FILE=$(find temp -name "*.cia" | head -n 1)
           cp "$FILE" gd3ds.cia
 
-      - name: Criar redirect fixo
+      - name: Criar index.html (redirect)
         run: |
           echo '<meta http-equiv="refresh" content="0; url=gd3ds.cia">' > index.html
 
-      - name: Gerar QR Code FIXO
+      - name: Gerar QR Code fixo
         run: |
           LINK="https://augamer.github.io/gd3ds-qr/"
           curl "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=$LINK" -o qr.png
@@ -39,7 +41,7 @@ jobs:
       - name: Commit e push
         run: |
           git config --global user.email "bot@bot.com"
-          git config --global user.name "bot"
+          git config --global user.name "GD3DS Bot"
           git add .
-          git commit -m "update automatico" || echo "sem mudanças"
+          git commit -m "Atualização automática do GD3DS" || echo "Nada para commitar"
           git push
